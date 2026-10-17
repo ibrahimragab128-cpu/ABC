@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tier-ABC Quiz für Kinder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', cursive, sans-serif;
+            background: linear-gradient(135deg, #fef08a 0%, #fed7aa 50%, #fbcfe8 100%);
+            min-height: 100vh;
+        }
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 2s infinite ease-in-out;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(234, 179, 8, 0.6); }
+            50% { box-shadow: 0 0 30px rgba(234, 179, 8, 0.9); }
+        }
+        .card-glow {
+            animation: pulse-glow 3s infinite;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between p-4 selection:bg-amber-300 min-h-screen">
+
+    <!-- Header Section -->
+    <header class="w-full max-w-2xl text-center py-4">
+        <h1 class="text-4xl md:text-6xl font-extrabold text-purple-700 drop-shadow-md mb-2 tracking-wide">
+            🐾 Tier-ABC Quiz 🐾
+        </h1>
+        <p class="text-lg md:text-2xl font-bold text-slate-700">
+            Lerne die Tiere auf Deutsch! Ist die Aussage richtig oder falsch?
+        </p>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="w-full max-w-xl bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-6 md:p-8 my-4 border-4 border-amber-300 card-glow relative overflow-hidden">
+        
+        <!-- Score & Progress Bar -->
+        <div class="flex justify-between items-center mb-6 bg-amber-100 p-3 md:p-4 rounded-2xl border-2 border-amber-300">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl md:text-3xl">⭐</span>
+                <span class="font-extrabold text-lg md:text-xl text-amber-900" id="score-display">Punkte: 0</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-2xl md:text-3xl">🎯</span>
+                <span class="font-bold text-base md:text-lg text-purple-700" id="progress-display">Frage 1 von 15</span>
+            </div>
+        </div>
+
+        <!-- Question Card / Animal Display -->
+        <div id="game-card" class="flex flex-col items-center text-center">
+            
+            <!-- Animal Emoji/Visual Representation -->
+            <div id="animal-visual" class="w-44 h-44 md:w-56 md:h-56 bg-gradient-to-tr from-amber-100 via-yellow-100 to-amber-200 rounded-full flex items-center justify-center text-8xl md:text-9xl shadow-inner mb-6 border-4 border-white animate-bounce-slow transform transition duration-300 hover:scale-105">
+                🐒
+            </div>
+
+            <!-- German Prompt Statement -->
+            <div class="bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-4 md:p-5 w-full mb-6 shadow-sm">
+                <p class="text-sm font-bold text-indigo-500 uppercase tracking-wider mb-1">Stimmt das?</p>
+                <h2 id="question-text" class="text-2xl md:text-4xl font-extrabold text-indigo-950 tracking-wide">
+                    Das ist ein Affe.
+                </h2>
+            </div>
+
+            <!-- True / False Action Buttons -->
+            <div class="grid grid-cols-2 gap-4 w-full">
+                <button onclick="handleAnswer(true)" class="bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600 text-white font-extrabold text-2xl md:text-3xl py-4 px-6 rounded-2xl shadow-lg transform transition active:scale-95 flex items-center justify-center gap-2 border-b-4 border-green-700">
+                    <span>✔️</span> Richtig
+                </button>
+                <button onclick="handleAnswer(false)" class="bg-gradient-to-r from-rose-400 to-red-500 hover:from-rose-500 hover:to-red-600 text-white font-extrabold text-2xl md:text-3xl py-4 px-6 rounded-2xl shadow-lg transform transition active:scale-95 flex items-center justify-center gap-2 border-b-4 border-red-700">
+                    <span>❌</span> Falsch
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Feedback Box -->
+        <div id="feedback-box" class="hidden mt-6 p-4 rounded-2xl text-center font-extrabold text-lg md:text-xl transition-all"></div>
+
+        <!-- Completion Screen (Hidden initially) -->
+        <div id="completion-screen" class="hidden flex flex-col items-center text-center py-6">
+            <div id="star-rating" class="text-5xl md:text-6xl mb-3">⭐⭐⭐</div>
+            <div class="text-7xl mb-4">🏆🎉</div>
+            <h2 class="text-3xl md:text-4xl font-extrabold text-purple-700 mb-2">Super gemacht!</h2>
+            <p id="final-score-text" class="text-xl md:text-2xl text-slate-700 font-bold mb-6">Du hast 150 Punkte erreicht!</p>
+            <button onclick="restartGame()" class="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-extrabold text-2xl py-4 px-8 rounded-2xl shadow-xl transform transition active:scale-95 border-b-4 border-orange-700">
+                🔄 Noch einmal spielen
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer info -->
+    <footer class="text-slate-600 text-sm md:text-base font-bold text-center py-2">
+        Viel Spaß beim Lernen! 🌟 Tier-ABC Quiz für Kinder
+    </footer>
+
+    <!-- Game Logic & Web Audio API Sound Generator -->
+    <script>
+        // Database of Tier-ABC animals based on the image
+        const animalsData = [
+            { name: "Affe", article: "ein", emoji: "🐒" },
+            { name: "Bär", article: "ein", emoji: "🐻" },
+            { name: "Chamäleon", article: "ein", emoji: "🦎" },
+            { name: "Delfin", article: "ein", emoji: "🐬" },
+            { name: "Elefant", article: "ein", emoji: "🐘" },
+            { name: "Fisch", article: "ein", emoji: "🐟" },
+            { name: "Giraffe", article: "eine", emoji: "🦒" },
+            { name: "Hund", article: "ein", emoji: "🐶" },
+            { name: "Igel", article: "ein", emoji: "🦔" },
+            { name: "Jaguar", article: "ein", emoji: "🐆" },
+            { name: "Krokodil", article: "ein", emoji: "🐊" },
+            { name: "Löwe", article: "ein", emoji: "🦁" },
+            { name: "Maus", article: "eine", emoji: "🐭" },
+            { name: "Nashorn", article: "ein", emoji: "🦏" },
+            { name: "Ochse", article: "ein", emoji: "🐂" },
+            { name: "Papagei", article: "ein", emoji: "🦜" },
+            { name: "Qualle", article: "eine", emoji: "🪼" },
+            { name: "Robbe", article: "eine", emoji: "🦭" },
+            { name: "Strauß", article: "ein", emoji: "🐦" },
+            { name: "Tiger", article: "ein", emoji: "🐅" },
+            { name: "Uhu", article: "ein", emoji: "🦉" },
+            { name: "Vogel", article: "ein", emoji: "🐤" },
+            { name: "Wolf", article: "ein", emoji: "🐺" },
+            { name: "Xaver (der Kater)", article: "ein", emoji: "🐱" },
+            { name: "Yak", article: "ein", emoji: "🐃" },
+            { name: "Zebra", article: "ein", emoji: "🦓" }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let currentAnimal = null;
+        let displayedAnimal = null;
+        let isStatementTrue = true;
+        const totalQuestions = 15; // Updated to exactly 15 questions
+        let gameQuestions = [];
+
+        // Web Audio API Sound Effects
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Simulating realistic applause & cheering sound
+        function playApplauseSound() {
+            initAudio();
+            const now = audioCtx.currentTime;
+
+            // Clapping sound pulses using noise buffer
+            const bufferSize = audioCtx.sampleRate * 1.5;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+
+            // Create multiple rapid clap hits
+            for (let i = 0; i < 20; i++) {
+                const clapDelay = now + (Math.random() * 0.85);
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1000 + Math.random() * 1200;
+
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.3 + Math.random() * 0.2, clapDelay);
+                gain.gain.exponentialRampToValueAtTime(0.001, clapDelay + 0.08);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                noise.start(clapDelay);
+                noise.stop(clapDelay + 0.09);
+            }
+
+            // Success chime & cheering melody
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+            notes.forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+
+                const noteTime = now + (idx * 0.08);
+                gain.gain.setValueAtTime(0.15, noteTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.3);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(noteTime);
+                osc.stop(noteTime + 0.3);
+            });
+
+            // Trigger Confetti Celebration
+            confetti({
+                particleCount: 90,
+                spread: 80,
+                origin: { y: 0.6 }
+            });
+        }
+
+        function playWrongSound() {
+            initAudio();
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.linearRampToValueAtTime(120, now + 0.35);
+
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(now);
+            osc.stop(now + 0.35);
+        }
+
+        // Shuffle helper
+        function shuffleArray(array) {
+            return [...array].sort(() => Math.random() - 0.5);
+        }
+
+        function initGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            gameQuestions = shuffleArray(animalsData).slice(0, totalQuestions);
+            document.getElementById('completion-screen').classList.add('hidden');
+            document.getElementById('game-card').classList.remove('hidden');
+            loadNextQuestion();
+        }
+
+        function loadNextQuestion() {
+            if (currentQuestionIndex >= totalQuestions) {
+                showCompletion();
+                return;
+            }
+
+            document.getElementById('progress-display').innerText = `Frage ${currentQuestionIndex + 1} von ${totalQuestions}`;
+            document.getElementById('score-display').innerText = `Punkte: ${score}`;
+            document.getElementById('feedback-box').classList.add('hidden');
+
+            currentAnimal = gameQuestions[currentQuestionIndex];
+
+            // 50% chance statement is correct or incorrect
+            isStatementTrue = Math.random() < 0.5;
+
+            if (isStatementTrue) {
+                displayedAnimal = currentAnimal;
+            } else {
+                let wrongAnimals = animalsData.filter(a => a.name !== currentAnimal.name);
+                displayedAnimal = wrongAnimals[Math.floor(Math.random() * wrongAnimals.length)];
+            }
+
+            // Update UI elements in German
+            document.getElementById('animal-visual').innerText = currentAnimal.emoji;
+            document.getElementById('question-text').innerText = `Das ist ${displayedAnimal.article} ${displayedAnimal.name}.`;
+        }
+
+        function handleAnswer(userChoice) {
+            const feedbackBox = document.getElementById('feedback-box');
+            feedbackBox.classList.remove('hidden');
+
+            // Correct choice check
+            const correctChoice = (currentAnimal.name === displayedAnimal.name);
+
+            if (userChoice === correctChoice) {
+                score += 10;
+                playApplauseSound();
+                feedbackBox.className = "mt-6 p-4 rounded-2xl text-center font-extrabold text-lg md:text-xl bg-emerald-100 text-emerald-900 border-2 border-emerald-400";
+                feedbackBox.innerHTML = `🎉 Super! Das ist richtig! Das ist ${currentAnimal.article} ${currentAnimal.name}!`;
+            } else {
+                playWrongSound();
+                feedbackBox.className = "mt-6 p-4 rounded-2xl text-center font-bold text-lg md:text-xl bg-rose-100 text-rose-900 border-2 border-rose-400";
+                feedbackBox.innerHTML = `❌ Oje! Das ist falsch. Das ist ${currentAnimal.article} ${currentAnimal.name}!`;
+            }
+
+            currentQuestionIndex++;
+
+            setTimeout(() => {
+                loadNextQuestion();
+            }, 2200);
+        }
+
+        function showCompletion() {
+            document.getElementById('game-card').classList.add('hidden');
+            document.getElementById('feedback-box').classList.add('hidden');
+            document.getElementById('completion-screen').classList.remove('hidden');
+            
+            // Calculate Stars based on Score out of 150
+            const maxScore = totalQuestions * 10; // 150
+            let stars = "⭐";
+            if (score >= maxScore * 0.8) {
+                stars = "⭐⭐⭐";
+            } else if (score >= maxScore * 0.5) {
+                stars = "⭐⭐";
+            }
+            document.getElementById('star-rating').innerText = stars;
+
+            document.getElementById('final-score-text').innerText = `Du hast ${score} von ${maxScore} Punkten erreicht!`;
+            
+            // Grand Celebration Confetti
+            confetti({
+                particleCount: 200,
+                spread: 120,
+                origin: { y: 0.5 }
+            });
+        }
+
+        function restartGame() {
+            initGame();
+        }
+
+        // Start game on load
+        window.onload = function() {
+            initGame();
+        };
+    </script>
+</body>
+</html>
